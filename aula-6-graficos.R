@@ -21,6 +21,7 @@ dadospibbr <- WDI(country = 'BR',
                   indicator = 'NY.GDP.MKTP.CD')
 
 ## FAZER GRÁFICOS
+# ggplot2 (faz parte do pacote tidyverse)
 
 install.packages("tidyverse")
 library(tidyverse)
