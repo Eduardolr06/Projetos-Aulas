@@ -15,7 +15,7 @@ dadospib <- WDI(country = 'all',
 # CORTE TRANSVERSAL
 dadospib2023 <- WDI(country = 'all',
                     indicator = 'NY.GDP.MKTP.CD',
-                    start = 2023, end = 2023)
+                    start = 2020, end = 2020)
 # SÉRIE TEMPORAL
 dadospibbr <- WDI(country = 'BR',
                   indicator = 'NY.GDP.MKTP.CD')
