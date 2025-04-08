@@ -8,62 +8,83 @@
 #install.packages("ggplot2")
 #install.packages("WDI")
 #install.packages("dplyr")
+
 #CARREGAR BIBLOTECAS
 library(WDI)
 library(ggplot2)
 library(dplyr)
 
-# Dados
-PASSENGERS_CARRIED <- WDI(country = 'all',
-                          indicator = 'IS.AIR.PSGR')
+install.packages("png")
+# Instale se não tiver
+install.packages("magick")
 
-# Criar a variável de grupo (Brasil x Outros)
-PASSENGERS_CARRIED <- PASSENGERS_CARRIED %>%
-  mutate(country_group = ifelse(country == "Brazil", "Brazil", "Other"))
+# Carregue o pacote
+library(magick)
 
-# Gráfico aprimorado
+# Leia a imagem
+bandeira <- image_read("bandeira_brasil.png")
+
+# Ajuste a opacidade (alpha) - por exemplo, 0.2 para 20% visível
+bandeira_opaca <- image_colorize(bandeira, opacity = 80, color = "white")
+
+# Salve a nova imagem com opacidade ajustada
+image_write(bandeira_opaca, path = "bandeira_brasil_opaca.png", format = "png")
+
+# Pacotes necessários
+library(ggplot2)
+library(WDI)
+library(png)
+library(grid)
+library(magick)
+
+# Passo 1: Leia e edite a imagem para aplicar opacidade apenas na imagem
+bandeira <- image_read("bandeira_brasil.png")
+bandeira_opaca <- image_colorize(bandeira, opacity = 80, color = "white")
+image_write(bandeira_opaca, path = "bandeira_brasil_opaca.png", format = "png")
+
+# Passo 2: Leia a imagem já com opacidade
+img <- readPNG("bandeira_brasil_opaca.png")
+g <- rasterGrob(img, interpolate = TRUE)
+
+# Passo 3: Baixe os dados
+PASSENGERS_CARRIED <- WDI(country = 'all', indicator = 'IS.AIR.PSGR')
+
+# Passo 4: Crie o gráfico moderno e destacado
 grafpainel <- ggplot(PASSENGERS_CARRIED, aes(x = year, y = IS.AIR.PSGR)) +
   
-  # Primeiro: todos os outros países, como fundo
-  geom_point(
-    data = filter(PASSENGERS_CARRIED, country_group == "Other"),
-    aes(color = country_group),
-    alpha = 0.2,
-    size = 1
-  ) +
+  # Imagem de fundo com opacidade
+  annotation_custom(g, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
   
-  # Depois: destaque para o Brasil, por cima
-  geom_point(
-    data = filter(PASSENGERS_CARRIED, country_group == "Brazil"),
-    color = "forestgreen",
-    size = 3
-  ) +
+  # Primeiro, plota os outros países (base cinza)
+  geom_point(data = subset(PASSENGERS_CARRIED, iso2c != "BR"),
+             aes(x = year, y = IS.AIR.PSGR),
+             color = "grey70",
+             size = 1.5,
+             alpha = 0.7) +
   
-  # Opcional: linha de tendência para o Brasil
-  geom_line(
-    data = filter(PASSENGERS_CARRIED, country_group == "Brazil"),
-    color = "forestgreen",
-    size = 1
-  ) +
+  # Depois, por cima de tudo, plota os dados do Brasil em verde escuro
+  geom_point(data = subset(PASSENGERS_CARRIED, iso2c == "BR"),
+             aes(x = year, y = IS.AIR.PSGR),
+             color = "#006400",  # Verde escuro
+             size = 4,
+             alpha = 1) +  # Totalmente visível
   
-  # Personalização
-  scale_color_manual(
-    values = c("Other" = "steelblue", "Brazil" = "forestgreen"),
-    labels = c("Outros países", "Brasil")
-  ) +
+  # Títulos e eixos
   labs(
-    title = "Passageiros Transportados por Via Aérea (Total)",
+    title = "Passageiros Transportados por Via Aérea",
     x = "Ano",
-    y = "Passageiros Transportados por Via Aérea",
-    color = "País"
+    y = "Passageiros Transportados por Via Aérea"
   ) +
+  
+  # Tema moderno
   theme_minimal(base_size = 14) +
   theme(
     plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
-    legend.position = "bottom"
+    panel.grid.major = element_line(color = "grey85"),
+    panel.grid.minor = element_blank()
   )
 
-# Exibir o gráfico
+# Exibe o gráfico
 print(grafpainel)
 
 
