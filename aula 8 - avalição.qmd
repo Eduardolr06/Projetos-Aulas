@@ -1,0 +1,190 @@
+---
+title: "Eduardo Luiz Rodrigues"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load-packages # nomes únicos
+#| include: false # não inclui o resultado no doc
+
+library(tidyverse) # pacote ggplot2 (gráficos)
+library(WDI) # pacote dos dados
+
+# BASE DE DADOS #
+# DADOS EM PAINEL
+PASSENGERS_CARRIED <- WDI(country = 'all', indicator = 'IS.AIR.PSGR')
+
+# CORTE TRANSVERSAL
+FORÇAS_ARMADAS <- WDI(country = 'all',
+                      indicator = 'MS.MIL.TOTL.P1',
+                      start = 2020, end = 2020)
+
+# SERIE TEMPORAL
+producao_cereal <- WDI(country = 'CHN',
+                       indicator = 'AG.PRD.CREL.MT')
+
+```
+
+## Variável
+
+Falar sobre a variável
+
+## GRÁFICO DADOS EM PAINEL
+
+Falar sobre o gráfico dados em painel
+
+```{r}
+#| label: dadosempainel 
+#| warning: false
+#| echo: false
+
+ggplot(PASSENGERS_CARRIED, aes(x = year, y = IS.AIR.PSGR)) +
+  
+  # Imagem de fundo com opacidade
+  annotation_custom(g, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+  
+  # Primeiro, plota os outros países (base cinza)
+  geom_point(data = subset(PASSENGERS_CARRIED, iso2c != "BR"),
+             aes(x = year, y = IS.AIR.PSGR),
+             color = "grey70",
+             size = 1.5,
+             alpha = 0.7) +
+  
+  # Depois, por cima de tudo, plota os dados do Brasil em verde escuro
+  geom_point(data = subset(PASSENGERS_CARRIED, iso2c == "BR"),
+             aes(x = year, y = IS.AIR.PSGR),
+             color = "#006400",  # Verde escuro
+             size = 4,
+             alpha = 1) +  # Totalmente visível
+  
+  # Títulos e eixos
+  labs(
+    title = "Passageiros Transportados por Via Aérea",
+    x = "Ano",
+    y = "Passageiros Transportados por Via Aérea"
+  ) +
+  
+  # Tema moderno
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    panel.grid.major = element_line(color = "grey85"),
+    panel.grid.minor = element_blank()
+  )
+  
+  
+
+```
+
+## GRÁFICO CORTE TRANSVERSAL
+
+Falar sobre o gráfico corte transversal
+
+```{r}
+#| label: cortetransversal
+#| warning: false
+#| echo: false  
+
+ggplot(FORÇAS_ARMADAS, aes(x = year, y = MS.MIL.TOTL.P1)) +
+  
+  # Primeiro, plota todos os outros países (fundo)
+  geom_point(data = filter(FORÇAS_ARMADAS, pais_destacado == "Outros"),
+             aes(color = pais_destacado),
+             alpha = 0.5,
+             size = 2) +
+  
+  # Depois, plota os EUA por cima, sobreposto
+  geom_point(data = filter(FORÇAS_ARMADAS, pais_destacado == "Estados Unidos"),
+             color = "blue",
+             size = 5) +
+  
+  # Títulos e labels dos eixos
+  labs(
+    title = "Efetivo das Forças Armadas em 2020",
+    subtitle = "Destaque para os Estados Unidos",
+    x = "Ano",
+    y = "Forças Armadas (Total de Pessoal)"
+  ) +
+  
+  # Cores modernas para os grupos
+  scale_color_manual(values = c("Outros" = "gray70", "Estados Unidos" = "blue")) +
+  
+  # Estilo clean
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    plot.subtitle = element_text(size = 12, hjust = 0.5),
+    legend.position = "bottom"
+  ) +
+  
+  # Animação de entrada dos pontos
+  transition_states(pais_destacado,
+                    transition_length = 2,
+                    state_length = 1) +
+  enter_fade() +
+  exit_fade()
+
+# Rodar a animação
+animate(grafcorte, width = 800, height = 500, fps = 20, duration = 4, renderer = gifski_renderer())
+
+# Salvar se quiser
+anim_save("forcas_armadas_eua.gif")
+  
+  
+```
+
+## GRÁFICO SÉRIE TEMPORAL
+
+Falar sobre o gráfico corte transversal
+
+```{r}
+#| label: serietemporal
+#| warning: false 
+#| echo: false    
+
+ggplot(producao_cereal, aes(x = year, y = AG.PRD.CREL.MT)) +
+  
+  # Linha da China em vermelho vibrante
+  geom_line(color = "#FF4500", size = 2) +
+  
+  # Pontos em gradiente para destacar valores
+  geom_point(aes(color = AG.PRD.CREL.MT), size = 3) +
+  
+  # Escala de cor vibrante (azul para vermelho intenso)
+  scale_color_gradient(low = "#00FFFF", high = "#FF4500") +
+  
+  # Títulos e eixos personalizados
+  labs(
+    title = "🚀 Produção de Cereal na China (Série Temporal)",
+    subtitle = "Evolução ao longo dos anos com destaque moderno",
+    x = "Ano",
+    y = "Produção de Cereal (Toneladas)",
+    color = "Produção"
+  ) +
+  
+  # Tema moderno com fundo escuro
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background = element_rect(fill = "#121212", color = NA),
+    panel.background = element_rect(fill = "#121212", color = NA),
+    panel.grid.major = element_line(color = "#444444"),
+    panel.grid.minor = element_line(color = "#444444"),
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5, color = "white"),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, color = "white"),
+    axis.title = element_text(color = "white"),
+    axis.text = element_text(color = "white"),
+    legend.title = element_text(color = "white"),
+    legend.text = element_text(color = "white")
+  ) +
+  
+  # Animação fluida revelando a linha
+  transition_reveal(year)
+
+# Rodar a animação
+animate(grafserie, width = 800, height = 500, fps = 20, duration = 5, renderer = gifski_renderer())
+
+# Salvar se quiser
+anim_save("producao_cereal_china_moderno.gif")
+
+```
