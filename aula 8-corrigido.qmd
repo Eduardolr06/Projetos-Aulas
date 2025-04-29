@@ -1,0 +1,186 @@
+---
+title: "Eduardo Luiz Rodrigues"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load-packages # nomes únicos
+#| include: false # não inclui o resultado no doc
+
+library(tidyverse) # pacote ggplot2 (gráficos)
+library(WDI) # pacote dos dados
+
+# BASE DE DADOS #
+# DADOS EM PAINEL
+PASSENGERS_CARRIED <- WDI(country = 'all', indicator = 'IS.AIR.PSGR')
+
+# CORTE TRANSVERSAL
+FORCAS_ARMADAS <- WDI(country = 'all',
+                      indicator = 'MS.MIL.TOTL.P1',
+                      start = 2020, end = 2020)
+
+# SERIE TEMPORAL
+producao_cereal <- WDI(country = 'CHN',
+                       indicator = 'AG.PRD.CREL.MT')
+
+```
+
+## Variável
+
+Apresenta 3 variáveis diferentes entre elas temos:\
+
+**PASSAGEIROS TRANSPORTADOS**
+
+A variável **Passageiros Transportados** indica o número total de passageiros transportados por um determinado meio de transporte (como avião, ônibus, trem ou metrô) durante um período de tempo específico. Esse indicador é importante para medir a demanda e a capacidade de transporte de uma empresa ou setor, refletindo diretamente a popularidade e a eficiência do serviço oferecido. Em contextos gerais, essa variável pode ser usada para analisar o crescimento do setor de transporte e a mobilidade de uma população, sendo uma métrica fundamental no planejamento urbano e no desenvolvimento de infraestruturas de transporte.
+
+### Forças Armadas
+
+A variável **Forças Armadas** representa o número total de membros ou o orçamento destinado às forças armadas de um país, responsáveis pela defesa nacional e pela segurança do território. Essa variável reflete a capacidade de um país de proteger suas fronteiras e garantir sua soberania. Em contextos gerais, as forças armadas são usadas para avaliar a política de defesa de um país, sua estabilidade política e seu poder militar, sendo crucial para analisar o impacto de gastos públicos, a alocação de recursos e a postura militar em relação a outros países.
+
+### Produção de Cereal
+
+A variável **Produção de Cereal** mede a quantidade total de cereais (como trigo, milho, arroz, entre outros) produzidos em uma determinada região ou país durante um período específico. Esse indicador está relacionado à segurança alimentar, à sustentabilidade agrícola e ao desempenho econômico do setor agrícola. Em contextos gerais, a produção de cereal é utilizada para avaliar a eficiência da agricultura, as condições climáticas e as políticas agrícolas de um país, além de ser um fator essencial nas negociações comerciais e no estudo de mercados internacionais de alimentos.
+
+## GRÁFICO DADOS EM PAINEL
+
+Um gráfico de dados em painel é empregado para exibir informações que envolvem duas ou mais dimensões ao longo do tempo. Esse tipo de gráfico permite observar a evolução de diferentes países, regiões ou estados em relação a uma variável específica ao longo de um período.
+
+Além disso, o gráfico de dados em painel facilita a comparação entre várias localidades, permitindo identificar padrões, como a continuidade de um crescimento ou a estagnação em determinadas áreas.
+
+```{r}
+#| label: dadosempainel 
+#| warning: false
+#| echo: false
+
+ggplot(PASSENGERS_CARRIED, aes(x = year, y = IS.AIR.PSGR)) +
+  
+  
+  # Primeiro, plota os outros países (base cinza)
+  geom_point(data = subset(PASSENGERS_CARRIED, iso2c != "BR"),
+             aes(x = year, y = IS.AIR.PSGR),
+             color = "grey70",
+             size = 1.5,
+             alpha = 0.7) +
+  
+  # Depois, por cima de tudo, plota os dados do Brasil em verde escuro
+  geom_point(data = subset(PASSENGERS_CARRIED, iso2c == "BR"),
+             aes(x = year, y = IS.AIR.PSGR),
+             color = "#006400",  # Verde escuro
+             size = 4,
+             alpha = 1) +  # Totalmente visível
+  
+  # Títulos e eixos
+  labs(
+    title = "Passageiros Transportados por Via Aérea",
+    x = "Ano",
+    y = "Passageiros Transportados por Via Aérea"
+  ) +
+  
+  # Tema moderno
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    panel.grid.major = element_line(color = "grey85"),
+    panel.grid.minor = element_blank()
+  )
+  
+  
+```
+
+## GRÁFICO CORTE TRANSVERSAL
+
+Um gráfico de dados de corte transversal é usado para apresentar informações de vários elementos (como países, estados ou regiões) em um único momento no tempo.
+
+Esse tipo de gráfico permite comparar como diferentes unidades se posicionam em relação a uma variável em um determinado período, ajudando a identificar desigualdades ou padrões de comportamento. Por exemplo, ao analisar a expectativa de vida em 2023, podemos perceber quais países possuem economias mais fortes ou mais frágeis naquele ano específico.
+
+```{r}
+#| label: cortetransversal
+#| warning: false
+#| echo: false  
+
+# Corrigir: não instalar nem carregar gganimate
+# (não precisa de install.packages nem library(gganimate))
+
+# Criar variável de destaque
+FORCAS_ARMADAS <- FORCAS_ARMADAS %>%
+  mutate(pais_destacado = ifelse(country == "United States", "Estados Unidos", "Outros"))
+
+# Gráfico
+ggplot(FORCAS_ARMADAS, aes(x = year, y = MS.MIL.TOTL.P1)) +
+  
+  # Outros países
+  geom_point(data = filter(FORCAS_ARMADAS, pais_destacado == "Outros"),
+             aes(color = pais_destacado),
+             alpha = 0.5,
+             size = 2) +
+  
+  # Estados Unidos
+  geom_point(data = filter(FORCAS_ARMADAS, pais_destacado == "Estados Unidos"),
+             color = "blue",
+             size = 5) +
+  
+  labs(
+    title = "Efetivo das Forças Armadas em 2020",
+    subtitle = "Destaque para os Estados Unidos",
+    x = "Ano",
+    y = "Forças Armadas (Total de Pessoal)",
+    color = "País"
+  ) +
+  scale_color_manual(values = c("Outros" = "gray70", "Estados Unidos" = "blue")) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    plot.subtitle = element_text(size = 12, hjust = 0.5),
+    legend.position = "bottom"
+  )
+```
+
+## GRÁFICO SÉRIE TEMPORAL
+
+O gráfico de dados de série temporal é utilizado para acompanhar o desenvolvimento de uma única variável ao longo dos anos. Esse tipo de gráfico permite observar como uma variável se altera ao longo de diferentes períodos, ajudando a identificar tendências, ciclos e variações sazonais. Por exemplo, ao analisar a "Expectativa de Vida ao Nascer", o gráfico de série temporal mostra os dados específicos de um único país (como o Brasil) ao longo do tempo.
+
+Com a série temporal, é possível ver a evolução da Expectativa de Vida ao Nascer de maneira progressiva, identificando, por exemplo, anos de aceleração ou estagnação, e associando essas mudanças a eventos históricos, como melhorias no sistema de saúde ou crises econômicas.
+
+```{r}
+#| label: serietemporal
+#| warning: false 
+#| echo: false    
+
+ggplot(producao_cereal, aes(x = year, y = AG.PRD.CREL.MT)) +
+  
+  # Linha da China em vermelho vibrante
+  geom_line(color = "#FF4500", size = 2) +
+  
+  # Pontos em gradiente para destacar valores
+  geom_point(aes(color = AG.PRD.CREL.MT), size = 3) +
+  
+  # Escala de cor vibrante (azul para vermelho intenso)
+  scale_color_gradient(low = "#00FFFF", high = "#FF4500") +
+  
+  # Títulos e eixos personalizados
+  labs(
+    title = "🚀 Produção de Cereal na China (Série Temporal)",
+    subtitle = "Evolução ao longo dos anos com destaque moderno",
+    x = "Ano",
+    y = "Produção de Cereal (Toneladas)",
+    color = "Produção"
+  ) +
+  
+  # Tema moderno com fundo escuro
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background = element_rect(fill = "#121212", color = NA),
+    panel.background = element_rect(fill = "#121212", color = NA),
+    panel.grid.major = element_line(color = "#444444"),
+    panel.grid.minor = element_line(color = "#444444"),
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5, color = "white"),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, color = "white"),
+    axis.title = element_text(color = "white"),
+    axis.text = element_text(color = "white"),
+    legend.title = element_text(color = "white"),
+    legend.text = element_text(color = "white")
+  )
+
+
+```
