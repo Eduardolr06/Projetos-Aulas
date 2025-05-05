@@ -50,6 +50,8 @@ Um gráfico de dados em painel é empregado para exibir informações que envolv
 
 Além disso, o gráfico de dados em painel facilita a comparação entre várias localidades, permitindo identificar padrões, como a continuidade de um crescimento ou a estagnação em determinadas áreas.
 
+Neste gráficos analisamos dados de passageiros transportados de vários países, porém destancando na cor verde os dados relacionados ao Brasil e em azul ao Estados Unidos.
+
 ```{r}
 #| label: dadosempainel 
 #| warning: false
@@ -109,7 +111,7 @@ print(grafpainel)
 
 Um gráfico de dados de corte transversal é usado para apresentar informações de vários elementos (como países, estados ou regiões) em um único momento no tempo.
 
-Esse tipo de gráfico permite comparar como diferentes unidades se posicionam em relação a uma variável em um determinado período, ajudando a identificar desigualdades ou padrões de comportamento. Por exemplo, ao analisar a expectativa de vida em 2023, podemos perceber quais países possuem economias mais fortes ou mais frágeis naquele ano específico.
+Esse tipo de gráfico permite comparar como diferentes unidades se posicionam em relação a uma variável em um determinado período, ajudando a identificar desigualdades ou padrões de comportamento. Por exemplo, ao analisar este gráfico podemos identificar in das forças armadas de vários países porém destacando em azul as informações dos Estados Unidos.
 
 ```{r}
 #| label: cortetransversal
@@ -121,13 +123,15 @@ Esse tipo de gráfico permite comparar como diferentes unidades se posicionam em
 
 # Criar variável de destaque
 FORCAS_ARMADAS <- FORCAS_ARMADAS %>%
-  mutate(pais_destacado = ifelse(country == "United States", "Estados Unidos", "Outros"))
+  mutate(pais_destacado = ifelse(country == "United States", "Estados Unidos", "Outros")) %>%
+  arrange(desc(MS.MIL.TOTL.P1)) %>%
+  slice(1:10)
 
 # Gráfico
-ggplot(FORCAS_ARMADAS, aes(x = year, y = MS.MIL.TOTL.P1)) +
+ggplot(FORCAS_ARMADAS, aes(x = MS.MIL.TOTL.P1, y = country)) +
   
   # Outros países
-  geom_point(data = filter(FORCAS_ARMADAS, pais_destacado == "Outros"),
+  geom_col(data = filter(FORCAS_ARMADAS, pais_destacado == "Outros"),
              aes(color = pais_destacado),
              alpha = 0.5,
              size = 2) +
@@ -155,9 +159,9 @@ ggplot(FORCAS_ARMADAS, aes(x = year, y = MS.MIL.TOTL.P1)) +
 
 ## GRÁFICO SÉRIE TEMPORAL
 
-O gráfico de dados de série temporal é utilizado para acompanhar o desenvolvimento de uma única variável ao longo dos anos. Esse tipo de gráfico permite observar como uma variável se altera ao longo de diferentes períodos, ajudando a identificar tendências, ciclos e variações sazonais. Por exemplo, ao analisar a "Expectativa de Vida ao Nascer", o gráfico de série temporal mostra os dados específicos de um único país (como o Brasil) ao longo do tempo.
+O gráfico de dados de série temporal é utilizado para acompanhar o desenvolvimento de uma única variável ao longo dos anos. Esse tipo de gráfico permite observar como uma variável se altera ao longo de diferentes períodos, ajudando a identificar tendências, ciclos e variações sazonais.
 
-Com a série temporal, é possível ver a evolução da Expectativa de Vida ao Nascer de maneira progressiva, identificando, por exemplo, anos de aceleração ou estagnação, e associando essas mudanças a eventos históricos, como melhorias no sistema de saúde ou crises econômicas.
+Com a série temporal, é possível ver a evolução da Produção de Cereal da China de maneira progressiva, identificando, por exemplo, anos de aceleração ou estagnação.
 
 ```{r}
 #| label: serietemporal
