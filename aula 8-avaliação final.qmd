@@ -10,6 +10,7 @@ editor: visual
 
 library(tidyverse) # pacote ggplot2 (gráficos)
 library(WDI) # pacote dos dados
+library(countrycode) #pacote com os códigos dos paises
 
 options(scipen = 999)
 
@@ -121,25 +122,32 @@ Esse tipo de gráfico permite comparar como diferentes unidades se posicionam em
 # Corrigir: não instalar nem carregar gganimate
 # (não precisa de install.packages nem library(gganimate))
 
+library(gghighlight) # pacote para destaque
+
 # Criar variável de destaque
+
+#lista dos codigos iso3c para filtragem dos paises
+lista_iso3c <- codelist %>%
+  select(iso3c)
+
+# seleciona apenas os paises e classifica os 10 maiores
+# cria a coluna pais_destacado
 FORCAS_ARMADAS <- FORCAS_ARMADAS %>%
   mutate(pais_destacado = ifelse(country == "United States", "Estados Unidos", "Outros")) %>%
-  arrange(desc(MS.MIL.TOTL.P1)) %>%
-  slice(1:10)
+  inner_join(lista_iso3c, by = join_by(iso3c)) %>%
+  top_n(10, MS.MIL.TOTL.P1) %>%
+  arrange(desc(MS.MIL.TOTL.P1))
 
 # Gráfico
 ggplot(FORCAS_ARMADAS, aes(x = MS.MIL.TOTL.P1, y = country)) +
   
   # Outros países
-  geom_col(data = filter(FORCAS_ARMADAS, pais_destacado == "Outros"),
-             aes(color = pais_destacado),
-             alpha = 0.5,
-             size = 2) +
+  geom_col() +
   
   # Estados Unidos
-  geom_point(data = filter(FORCAS_ARMADAS, pais_destacado == "Estados Unidos"),
-             color = "blue",
-             size = 5) +
+  # geom_point(data = filter(FORCAS_ARMADAS, pais_destacado == "Estados Unidos"),
+  #           color = "blue",
+  #          size = 5) +
   
   labs(
     title = "Efetivo das Forças Armadas em 2020",
@@ -154,7 +162,8 @@ ggplot(FORCAS_ARMADAS, aes(x = MS.MIL.TOTL.P1, y = country)) +
     plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
     plot.subtitle = element_text(size = 12, hjust = 0.5),
     legend.position = "bottom"
-  )
+  ) +
+  gghighlight(country == "United States")
 ```
 
 ## GRÁFICO SÉRIE TEMPORAL
