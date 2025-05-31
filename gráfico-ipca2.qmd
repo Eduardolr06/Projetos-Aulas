@@ -1,0 +1,120 @@
+---
+title: "Gráfico IPCA Animado"
+format: html
+execute:
+  echo: true
+---
+
+```{r}
+#| label: carregar-pacotes # nomes únicos
+#| include: false # não inclui o resultado no doc
+
+library(GetBCBData)
+library(tidyverse)
+library(gganimate)
+library(scales)
+library(showtext)
+library(gifski)
+library()
+
+font_add_google("Roboto", "roboto")
+showtext_auto()
+
+
+```
+
+```{r}
+#| label: baixar-dados
+#| warning: false
+#| echo: false
+
+my_id <- c(ipca_ma = 11426)
+
+df_bcb <- gbcbd_get_series(
+  id = my_id,
+  first.date = "2001-01-31",
+  last.date = Sys.Date(),
+  format.data = "long",
+  use.memoise = TRUE,
+  cache.path = tempdir(),
+  do.parallel = FALSE
+)
+```
+
+**Eduardo Luiz Rodrigues**
+
+------------------------------------------------------------------------
+
+### IPCA - Núcleo Médias Aparadas sem Suavização
+
+O **IPCA - Núcleo Médias Aparadas sem Suavização** é uma medida da inflação que busca mostrar a **tendência real dos preços**, excluindo automaticamente os que mais se desviam da média, como altas ou quedas extremas. Isso evita que choques temporários distorçam a análise. A expressão "sem suavização" significa que não são feitos ajustes adicionais para deixar os dados mais estáveis. Assim, esse núcleo oferece uma visão mais clara e objetiva da **inflação subjacente** no Brasil.
+
+```{r}
+#| label: criar-grafico
+#| warning: false
+#| echo: false  
+
+
+grafico_ipca <- df_bcb |>
+  ggplot(aes(x = ref.date, y = value)) +
+  geom_line(color = "#FFFF00", size = 1.4) +
+  geom_point(color = "#FF4500", size = 2.5, alpha = 0.9) +
+  geom_smooth(
+    method = "loess",
+    se = FALSE,
+    color = "white",
+    linetype = "dashed",
+    size = 1
+  ) +
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  labs(
+    title = "IPCA - Núcleo médias aparadas sem suavização",
+    subtitle = "De: {frame_along}",
+    x = NULL,
+    y = "Variação % a.m.",
+    caption = "Fonte: Banco Central do Brasil | Elaborado via GetBCBData"
+  ) +
+  theme_minimal(base_family = "roboto") +
+  theme(
+    plot.background = element_rect(fill = "black", color = NA),
+    panel.background = element_rect(fill = "black", color = NA),
+    panel.grid.major = element_line(color = "grey40"),
+    panel.grid.minor = element_line(color = "grey20"),
+    plot.title = element_text(size = 18, face = "bold", color = "white"),
+    plot.subtitle = element_text(size = 14, color = "white"),
+    plot.caption = element_text(size = 10, color = "grey70"),
+    axis.text = element_text(size = 12, color = "white"),
+    axis.title = element_text(size = 14, color = "white"),
+    legend.position = "none"
+  ) +
+  transition_reveal(along = ref.date)
+
+```
+
+```{r}
+#| label: gerar-animacao
+#| warning: false 
+#| echo: false    
+
+animacao_ipca <- animate(
+  grafico_ipca,
+  renderer = gifski_renderer(loop = FALSE),
+  width = 800,
+  height = 500,
+  fps = 20,
+  units = "px",
+  res = 150
+)
+
+animacao_ipca
+
+```
+
+```{r}
+#| label: opcional
+#| warning: false 
+#| echo: false    
+
+anim_save("grafico_ipca_alto_contraste.gif", animation = animacao_ipca)
+
+```
