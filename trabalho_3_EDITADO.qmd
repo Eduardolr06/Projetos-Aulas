@@ -1,0 +1,131 @@
+---
+title: "Acesso à Eletricidade nas Áreas Rurais"
+format:
+  html:
+    toc: true
+    number-sections: true
+    css: justificar.css
+---
+
+```{r}
+#| label: pacotes
+#| warning: false
+#| echo: false
+
+# Pacotes necessários
+library(tidyverse)
+library(WDI)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(ggplot2)
+library(viridis)
+library(gganimate)
+library(readr)
+library(dplyr)
+```
+
+# **Acesso à Eletricidade nas Áreas Rurais**
+
+A variável representa o **percentual da população rural com acesso à eletricidade**, sendo um dos principais indicadores de desenvolvimento socioeconômico. Desde os anos **1960**, o acesso era bastante **limitado**, especialmente na **África Subsaariana**, **Ásia Meridional** e partes da **América Latina**.
+
+A partir das décadas de **1980 e 1990**, houve uma ampliação significativa do acesso, impulsionada por **políticas públicas** de eletrificação rural e o apoio de instituições internacionais como o **Banco Mundial**. O avanço tecnológico, sobretudo com a introdução de **energias renováveis** e **micro-redes solares**, acelerou o progresso, especialmente em áreas remotas.
+
+Nos anos **2000 e 2010**, países como **Índia**, **Bangladesh** e nações latino-americanas atingiram níveis elevados de eletrificação rural, enquanto algumas regiões africanas ainda enfrentam **desafios** importantes.
+
+Atualmente, embora a média global de acesso rural à eletricidade ultrapasse **80%**, as **desigualdades regionais persistem**, com países desenvolvidos próximos de **100%**, enquanto partes da África mantêm índices inferiores a **30%**. O acesso universal até **2030** permanece um dos principais objetivos da **Agenda 2030 da ONU**, por meio do **ODS 7** — Energia Limpa e Acessível.
+
+```{r}
+#| label: dados-bm
+#| warning: false
+#| echo: false
+
+electricity_data <- WDI(
+  indicator = "EG.ELC.ACCS.RU.ZS",
+  start = 1990,
+  end = as.numeric(format(Sys.Date(), "%Y")),
+  extra = TRUE
+)
+
+electricity_data <- electricity_data |>
+  filter(!is.na(iso3c)) |>
+  select(
+    iso3c,
+    country,
+    region,
+    year,
+    rural_electricity = EG.ELC.ACCS.RU.ZS
+  )
+
+```
+
+```{r}
+#| label: Obter-o-mapa-do-mundo
+#| warning: false
+#| echo: false
+
+world <- ne_countries(scale = "medium", returnclass = "sf") |>
+  mutate(iso_a3 = as.character(iso_a3))
+
+
+```
+
+```{r}
+#| label: Unir-dados-com-o-mapa
+#| warning: false
+#| echo: false
+
+# Fazer a junção para todos os anos
+world_data <- world |>
+  right_join(electricity_data, by = c("iso_a3" = "iso3c"))
+
+
+```
+
+```{r}
+#| label: criar-mapa
+#| warning: false
+#| message: false
+#| echo: false
+
+#| label: criar-mapa
+#| warning: false
+#| message: false
+#| echo: false
+
+# Filtra anos com dados em eletricidade rural
+anos_validos <- world_data |>
+  filter(!is.na(rural_electricity)) |>
+  pull(year) |>
+  unique() |>
+  sort()
+
+# Cria base apenas com os anos válidos
+data_animada <- world_data |>
+  filter(year %in% anos_validos)
+
+# Cria o gráfico animado com eletricidade rural
+grafico_animado <- ggplot(world_data) +
+  geom_sf(aes(fill = rural_electricity)) +
+  transition_manual(year)+
+  labs(
+    title = "Acesso à eletricidade na área rural - {current_frame}",
+  ) +
+  theme_minimal()
+
+# Salva como GIF
+gganimate::animate(
+  grafico_animado,
+  fps = 10,
+  renderer = gganimate::gifski_renderer("grafico.gif")
+)
+
+```
+
+```{r}
+#| echo: false
+
+
+#anim_save("grafico_eletricidade_rural.gif", animation = animacao)
+
+```
